@@ -3,15 +3,20 @@ import os
 from ingestion.pdf_ingestion import load_pdf
 from ingestion.url_ingestion import load_url
 from docs.google_docs import load_google_doc
-from retrieval.retriever import generate_answer
+from retrieval.retriever_transformer import generate_answer
 from langchain_community.llms import OpenAI
 from langchain.chains import ConversationalRetrievalChain
+from transformers import TextGenerationPipeline
 
 st.title("RAG APP")
 uploaded_files = st.file_uploader("Upload PDFs", type=["pdf"], accept_multiple_files=True)
 urls_input = st.text_area("Enter website URLs, comma separated")
 google_docs_ids_input = st.text_area("Enter Google Doc IDs, comma separated")
 google_api_key = os.getenv('GOOGLE_API_KEY')
+
+
+# TextGenerationPipeline for GPT-J
+generator = TextGenerationPipeline.from_pretrained(model="EleutherAI/gpt-j-6b", max_length=50, num_return_sequences=1)
 
 if st.button("Process Documents"):
     documents = []
@@ -53,7 +58,7 @@ if st.button("Process Documents"):
     if len(query) < 2:
         query = st.text_input("Ask a question about the documents")
         print("query is: ", query)
-        answer = generate_answer(query, documents)
+        answer = generate_answer(query, documents, generator)
         print("answer is ****: ", answer)
         st.write(f"Answer: {answer}")
         
